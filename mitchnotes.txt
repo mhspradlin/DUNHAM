@@ -1,0 +1,40 @@
+2014-8-2
+These are notes about how the Dunham telescope slewing functions work, and how
+we might get them to work on a modern machine.
+
+It seems like, to actually send a signal to the motors, they used the outp()
+function as found in the <conio.h> MS-DOS specific header file. The outp()
+function takes a port number (IO port, presumably) and a value as an argument,
+presumably pulsing for some length of time to signify a value. In the code, this
+goes to an PULSEPORT which is defined in globals.h to be a value on an IOboard.
+
+Also referenced in the globals.h is an 8253 timer chip, which upon some
+wikipedia investigation into the control modes, was put into a rate generator
+mode, which acted as a divide-by-n counter. So, it would essentially be sending
+LOW pulses out at a rate set by a voltage at one of the control pins. From what
+I can tell, it's typically a long HI followed by a LOW pulse.
+
+Just guessing, I think the motor speed is controlled with pulses, which are sent
+to the motor by the timer chip. The computer would send a programming number to
+the chip using a single IO pin which would change the rate of the pulses, and
+thereby the motor. Seems simple enough. Further, seems extensible enough - all
+that might need to be done would be to make sure that the character-display
+commands were such that it would work on a new system, and then to make sure
+that we moved from the <conio.h> outp() syntax to a function that could pulse an
+IO pin on a modern system. This could be done on a raspberry pi, where we pulsed
+a value in a file that represents one of the digital IO pins.
+
+Interestingly, I think the rate for both the X motor and the Y motor were able
+to be encoded in a single pulse message from the computer, likely meaning that
+the timer chip had two outputs, the frequencies of which were cleverly
+controlled by the input sent to one pin. That, or there was some other circuitry
+after the timer chip that parsed the different frequency times to interpret what
+should be sent to each motor.
+
+I would really like to see the state of the rest of the circuitry/motors. I
+imagine that that stuff is still in good shape, as there shouldn't be as many
+sensitive components as the old computer. If so, then a simple rewrite of the
+outp() function and the console control commands should be sufficient and the
+new system can simply be plugged into the old one - assuming that the way that
+the PULSEPORT encodes messages would be the same. This would have to be a part
+of the outp() rewrite.

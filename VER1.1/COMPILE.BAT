@@ -1,0 +1,3 @@
+@echo off
+echo compiling dunham program...
+bcc -mh -v dunham.c globals.c motor.c tracking.c paddle.c slew.c timeset.c isr.c utils.c prefs.c string.c | more

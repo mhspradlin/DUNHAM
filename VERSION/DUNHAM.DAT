@@ -1,0 +1,11 @@
+ShowXY 0
+FastSlew 1
+FastPaddleSpeed 4
+SlowPaddleSpeed 50
+CloseEnough 1333
+TimeToDarken 9180
+MaxDelay 100
+MinDelay 24
+MinSteps 6
+MaxSteps 250
+Levels 24

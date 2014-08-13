@@ -1,0 +1,14 @@
+void DoPreferencesMenu( int *menu );
+void DoShowXYMenu( int *menu );
+void DoSlewSpeedMenu( int *menu );
+void DoFastPaddleMenu( int *menu );
+void DoSlowPaddleMenu( int *menu );
+void DoAccelerationMenu( int *menu );
+void DoAccuracyMenu( int *menu );
+void DoMaxDelayMenu( int *menu );
+void DoMinDelayMenu( int *menu );
+void DoMinStepsMenu( int *menu );
+void DoMaxStepsMenu( int *menu );
+void DoLevelsMenu( int *menu );
+void DoDarkTimeMenu( int *menu );
+void SavePrefsFile( void );
