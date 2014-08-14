@@ -114,3 +114,8 @@ into driving the motors - it's possible that all of this control word business
 could be simplified by just figuring out the rates that things need signals to
 be sent to them, and using modern hardware (which hopefully can switch reliably
 at those rates in software) to emulate the behavior.
+
+Oh, it could be that the control words sent to the timer actually are changing
+the interrupt interval of the cpu itself. This could be where the time
+synchronization occurs. If that's the case, it's a bit more of a mystery how the
+signal gets sent to the motor. Inspection of the circuitry would be helpful.
