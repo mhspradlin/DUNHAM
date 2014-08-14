@@ -38,3 +38,79 @@ outp() function and the console control commands should be sufficient and the
 new system can simply be plugged into the old one - assuming that the way that
 the PULSEPORT encodes messages would be the same. This would have to be a part
 of the outp() rewrite.
+
+2014-8-13
+To help figure out if the console control commands need to be rewritten, I'll
+look up the heavily-used functions gotoxy(). There's two other functions that
+are used called EraseLine() and FrameScreen(), but I think those are builtin
+functions on account of their lack of camelcase.
+
+It seems that the gotoxy() function is a part of the <conio.h> library, which
+will of course not be portable to a linux system. However, I think that the
+damage is minimal, as the gotoxy() function is the same as the move() function
+in the <ncurses.h> library, which is the modern library to use for making
+terminal applications like this.
+
+Another function that is used is clrscr(), which is the same as the erase()
+function I believe.
+
+ALso used is wherex(), wherey(), and putchar(), the last of which has a direct
+complement in addch(). The wherex() and wherey() functions can be replaced with
+the getyx() function. This last replacement will necessitate the rewriting of
+some of the actual code as opposed to just performing a drop-in redefining of
+the incompatible functions, although it could be done.
+
+Here's what I'm thinking: Create a new header and C file to replace <conio.h>.
+This will reimplement the following functions using modern libraries (ncurses
+for the terminal stuff, outp() with a platform-specific implementation):
+    outp()
+    gotoxy()
+    wherex()
+    wherey()
+    clrscr()
+    putchar()
+    getch()
+    kbhit()
+With this, we can simply import the new header file instead of <conio.h>, and
+not have to touch any of the other code (hopefully). For the terminal printing
+stuff, this will almost certainly work. For the outp() function and the plethora
+of timing information that it relies on, it might be a different story. Let's
+look at how exactly all of the timing information comes into play.
+
+Looking at SLEW.C, it seems like the motor speed information for a given action is
+pre-loaded into two arrays, one for the X motor and one for the Y motor. Things
+like raming up and ramping down are accomplished by increasing/decreasing the
+value as the array is walked through. A 'cruise' value is then loaded for a
+particular number of indices, then it is ramped down again. The arrays are then
+walked through to construct OUTWORDS (program signals for the timer chip that
+drives the motors) that are sent to the PULSEPORT, which are interleaved with
+NOPULSEs. The thing is, there's no time synchronization in this bit of code,
+which hopefully doesn't mean that it just happened to work with the speed at
+which the processor on the original machine ran. I'll examine the GLOBALS.H file
+to see if I can get more answers.
+
+There are some constants, TRACKTICK, TRACKLOWORD, TRACKTKTIME, SLOWTKTIME, and
+the like, which are defined in terms of the clock speed of the 8253 chip (which
+I hope is an external timing chip that is in some circuit that controls the
+motors and not a chip internal to computer) that suggest some sort of time
+synchronization, but I didn't see any of it in SLEW.C. I'll look around and try
+to find where those constants are used.
+
+The machine that this was run on initially is a Dell 425s/L. The timer chip,
+from a little research, seems to have been used as a timer to augment an Intel
+processor, which this Dell certainly has. Further, it was very possibly built
+into the CPU itself, meaning that the PULSEPORT location that keeps getting
+written to might have been a reserved file descriptor of some sort. 
+
+Yup, it's a special register called the Control Word Register, which I think is
+MS-DOS-ish language for a special file descriptor or some equivalent construct.
+So, what will have to happen is that all of the timing information and control
+word business will have to be adapted for use on the new platform with its own
+clock quirks and such. A bit more of a challenge than the other things, but
+definitely doable.
+
+What would be immensely helpful is to see the rest of the circuitry that goes
+into driving the motors - it's possible that all of this control word business
+could be simplified by just figuring out the rates that things need signals to
+be sent to them, and using modern hardware (which hopefully can switch reliably
+at those rates in software) to emulate the behavior.
